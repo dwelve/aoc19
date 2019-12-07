@@ -23,14 +23,6 @@ class Day1 : IDay {
         return ans
     }
 
-    /*
-    def get_fuel2(mass, acc=0):
-        fuel = get_fuel(mass)
-        if fuel > 0:
-            return get_fuel2(fuel, acc+fuel)
-        else:
-            return acc
-    */
     override fun runPart2(raw_input: String): Int {
         val masses = parseInput(raw_input)
         val ans = masses.map{ getFuel2(it) }.sum()
