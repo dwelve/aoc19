@@ -1,11 +1,21 @@
-package dev.lue.aoc19
+package dev.lue.aoc19.Day5
+
+import dev.lue.aoc19.IDay
 
 enum class IOType { READ, WRITE }
-enum class ModeType { INDIRECT, LITERAL }
+enum class ModeType(val mode: Int) {
+    INDIRECT(0),
+    LITERAL(1);
 
-typealias OpcodeFunction = (MutableList<Int>, Int) -> Int
+    companion object {
+        fun from(findMode: Int): ModeType = ModeType.values().first { it.mode == findMode }
+    }
+}
 
-data class Opcode(val op: Int, val fn: OpcodeFunction, val parameters: List<IOType>)
+typealias OpcodeFunction = (MutableList<Int>, Int, List<ModeType>) -> Int
+//typealias IOFunction = (MutableList<Int>, Int, ModeType) -> ()
+
+data class Opcode(val op: Int, val call: OpcodeFunction, val parameters: List<IOType>)
 
 class CPU constructor(val program: MutableList<Int>) {
     var pc: Int = 0
@@ -15,25 +25,25 @@ class CPU constructor(val program: MutableList<Int>) {
         99 to Opcode(99, ::op99, emptyList())
     )
 
-    fun op1(data: MutableList<Int>, pc: Int): Int {
-        val a = read(data, pc+1)
-        val b = read(data, pc+2)
+    fun op1(data: MutableList<Int>, pc: Int, modes: List<ModeType>): Int {
+        val a = read(data, pc+1, modes[0])
+        val b = read(data, pc+2, modes[1])
         val out = a + b
         //println("$a + $b = $out")
-        write(data, pc+3, out)
+        write(data, pc+3, out, modes[2])
         return pc+4
     }
 
-    fun op2(data: MutableList<Int>, pc: Int): Int {
-        val a = read(data, pc+1)
-        val b = read(data, pc+2)
+    fun op2(data: MutableList<Int>, pc: Int, modes: List<ModeType>): Int {
+        val a = read(data, pc+1, modes[0])
+        val b = read(data, pc+2, modes[1])
         val out = a * b
         //println("$a * $b = $out")
-        write(data, pc+3, out)
+        write(data, pc+3, out, modes[2])
         return pc+4
     }
-    
-    fun op99(data: MutableList<Int>, pc: Int): Int {
+
+    fun op99(data: MutableList<Int>, pc: Int, modes: List<ModeType>): Int {
         throw HaltException()
     }
 
@@ -53,10 +63,15 @@ class CPU constructor(val program: MutableList<Int>) {
     }
 
     fun step() {
-        val op = program[pc]
+        val opWithMode = program[pc]
+        val op = opWithMode % 100
+        val m0 = ModeType.from((opWithMode / 100) % 10)
+        val m1 = ModeType.from((opWithMode / 1000) % 10)
+        val m2 = ModeType.from((opWithMode / 10000) % 10)
+        val modes = listOf(m0, m1, m2)
         val opcode = opcodes[op] ?: error("Invalid opcode: $op")
         //println("pc: $pc  op: $op")
-        pc = opcode.fn(program, pc)
+        pc = opcode.call(program, pc, modes)
     }
 
     fun read(data: MutableList<Int>, value: Int, mode: ModeType = ModeType.INDIRECT): Int {
@@ -78,9 +93,9 @@ class CPU constructor(val program: MutableList<Int>) {
     }
 }
 
-class Day2 : IDay {
-    override val part1InputFilename: String = "2.txt"
-    override val part2InputFilename: String = "2.txt"
+class Day5: IDay {
+    override val part1InputFilename: String = "5.txt"
+    override val part2InputFilename: String = "5.txt"
 
 
     fun parseInput(raw_input: String): List<Int> {
