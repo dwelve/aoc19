@@ -4,11 +4,11 @@ class Day1 : IDay {
     override val part1InputFilename: String = "1.txt"
     override val part2InputFilename: String = "1.txt"
 
-    private fun getFuel(mass: Int): Int {
+    fun getFuel(mass: Int): Int {
         return (mass / 3) - 2
     }
 
-    private fun getFuel2(mass: Int, acc: Int = 0): Int {
+    fun getFuel2(mass: Int, acc: Int = 0): Int {
         val fuel = getFuel(mass)
         return if (fuel > 0) getFuel2(fuel, acc + fuel) else acc
     }

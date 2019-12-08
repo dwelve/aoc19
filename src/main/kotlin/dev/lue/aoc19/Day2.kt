@@ -1,5 +1,7 @@
 package dev.lue.aoc19
 
+import kotlin.math.max
+
 enum class IOType { READ, WRITE }
 enum class ModeType { INDIRECT, LITERAL }
 
@@ -20,7 +22,7 @@ class CPU constructor(val program: MutableList<Int>) {
         val a = read(data, pc+1)
         val b = read(data, pc+2)
         val out = a + b
-        println("$a + $b = $out")
+        //println("$a + $b = $out")
         write(data, pc+3, out)
         return pc+4
     }
@@ -29,7 +31,7 @@ class CPU constructor(val program: MutableList<Int>) {
         val a = read(data, pc+1)
         val b = read(data, pc+2)
         val out = a * b
-        println("$a * $b = $out")
+        //println("$a * $b = $out")
         write(data, pc+3, out)
         return pc+4
     }
@@ -48,15 +50,15 @@ class CPU constructor(val program: MutableList<Int>) {
                 step()
             }
         } catch (e: HaltException) {
-            println("CPU HALT")
+            //println("CPU HALT")
         }
-        println(program)
+        //println(program)
     }
 
     fun step() {
         val op = program[pc]
         val opcode = opcodes[op] ?: error("Invalid opcode: $op")
-        println("pc: $pc  op: $op")
+        //println("pc: $pc  op: $op")
         pc = opcode.fn(program, pc)
     }
 
@@ -78,10 +80,6 @@ class CPU constructor(val program: MutableList<Int>) {
         }*/
     }
 }
-/*
-@Test fun sometEst() {
-    assertEquals(1, 1)
-}*/
 
 class Day2 : IDay {
     override val part1InputFilename: String = "2.txt"
@@ -93,19 +91,30 @@ class Day2 : IDay {
     }
 
     override fun runPart1(raw_input: String): Int {
-        //val program = parseInput(raw_input).toMutableList()
-        val program = mutableListOf(1,0,0,0,99)
-        val cpu = CPU(program)
-        cpu.run()
-        return 0
-    }
-
-    override fun runPart2(raw_input: String): Int {
         val program = parseInput(raw_input).toMutableList()
         program[1] = 12
         program[2] = 2
+        //val program = mutableListOf(1,0,0,0,99)
+
         val cpu = CPU(program)
         cpu.run()
+        return program[0]
+    }
+
+    override fun runPart2(raw_input: String): Int {
+        val goal: Int = 19690720
+        for (noun in 0..99) {
+            for (verb in 0..99) {
+                val program = parseInput(raw_input).toMutableList()
+                program[1] = noun
+                program[2] = verb
+                val cpu = CPU(program)
+                cpu.run()
+                if (program[0] == goal) {
+                    return 100*noun + verb
+                }
+            }
+        }
         return 0
     }
 }
