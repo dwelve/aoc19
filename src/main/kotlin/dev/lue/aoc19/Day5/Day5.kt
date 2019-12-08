@@ -1,6 +1,7 @@
 package dev.lue.aoc19.Day5
 
 import dev.lue.aoc19.IDay
+import java.util.*
 
 enum class IOType { READ, WRITE }
 enum class ModeType(val mode: Int) {
@@ -17,15 +18,52 @@ typealias OpcodeFunction = (MutableList<Int>, Int, List<ModeType>) -> Int
 
 data class Opcode(val op: Int, val call: OpcodeFunction, val parameters: List<IOType>)
 
+
+interface IReadDevice {
+    fun read(): Int
+}
+
+interface IWriteDevice {
+    fun write(value: Int)
+}
+
+interface IReadWriteDevice: IReadDevice, IWriteDevice
+
+class IntcodeInput: IReadDevice {
+    val buffer: Deque<Int> = LinkedList()
+
+    override fun read(): Int {
+        return buffer.pollFirst()
+    }
+
+    fun feedInput(value: Int) {
+        buffer.addLast(value)
+    }
+}
+
+class IntcodeOutput: IWriteDevice {
+    val buffer: Deque<Int> = LinkedList()
+
+    override fun write(value: Int) {
+        buffer.addLast(value)
+    }
+}
+
 class CPU constructor(val program: MutableList<Int>) {
     var pc: Int = 0
+    val inputDevice = IntcodeInput()
+    val outputDevice = IntcodeOutput()
+
     val opcodes: Map<Int, Opcode > = mapOf(
         1 to Opcode(1, ::op1, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
         2 to Opcode(2, ::op2, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
+        3 to Opcode(3, ::op3, listOf(IOType.READ, IOType.WRITE)),
+        4 to Opcode(4, ::op4, listOf(IOType.READ)),
         99 to Opcode(99, ::op99, emptyList())
     )
 
     fun op1(data: MutableList<Int>, pc: Int, modes: List<ModeType>): Int {
+        // add
         val a = read(data, pc+1, modes[0])
         val b = read(data, pc+2, modes[1])
         val out = a + b
@@ -35,6 +73,7 @@ class CPU constructor(val program: MutableList<Int>) {
     }
 
     fun op2(data: MutableList<Int>, pc: Int, modes: List<ModeType>): Int {
+        // mul
         val a = read(data, pc+1, modes[0])
         val b = read(data, pc+2, modes[1])
         val out = a * b
@@ -43,13 +82,30 @@ class CPU constructor(val program: MutableList<Int>) {
         return pc+4
     }
 
+    fun op3(data: MutableList<Int>, pc: Int, modes: List<ModeType>): Int {
+        // read from input, write to indirect location
+        if (modes[0] != ModeType.INDIRECT) {
+            throw InvalidModeException()
+        }
+        val a = inputDevice.read()
+        //println("$a * $b = $out")
+        write(data, pc+1, a, modes[0])
+        return pc+2
+    }
+
+    fun op4(data: MutableList<Int>, pc: Int, modes: List<ModeType>): Int {
+        // write to output
+        val a = read(data, pc+1, modes[0])
+        outputDevice.write(a)
+        return pc+2
+    }
+
     fun op99(data: MutableList<Int>, pc: Int, modes: List<ModeType>): Int {
         throw HaltException()
     }
 
-    class HaltException : Throwable() {
-
-    }
+    class HaltException : Throwable() {}
+    class InvalidModeException : Throwable() {}
 
     fun run() {
         try {
@@ -104,28 +160,15 @@ class Day5: IDay {
 
     override fun runPart1(raw_input: String): Int {
         val program = parseInput(raw_input).toMutableList()
-        program[1] = 12
-        program[2] = 2
-
         val cpu = CPU(program)
+        cpu.inputDevice.feedInput(1)
         cpu.run()
-        return program[0]
+        val output = cpu.outputDevice.buffer.toList()
+        println("Part 1 Output: $output")
+        return output.last()
     }
 
     override fun runPart2(raw_input: String): Int {
-        val goal: Int = 19690720
-        for (noun in 0..99) {
-            for (verb in 0..99) {
-                val program = parseInput(raw_input).toMutableList()
-                program[1] = noun
-                program[2] = verb
-                val cpu = CPU(program)
-                cpu.run()
-                if (program[0] == goal) {
-                    return 100*noun + verb
-                }
-            }
-        }
         return 0
     }
 }

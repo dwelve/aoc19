@@ -32,11 +32,10 @@ class Day5Test{
         assertEquals(expectedResult, program, "program [$raw_input] should result in $expectedResult")
     }
 
-    /*
+
     @Test
     fun solutionTest() {
         val app = Day5()
         app.run()
     }
-    */
 }
