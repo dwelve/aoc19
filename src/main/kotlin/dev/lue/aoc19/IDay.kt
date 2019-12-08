@@ -10,11 +10,11 @@ interface IDay {
     fun run() {
         val part1Input = Resources.get(part1InputFilename)
         val ans1 = runPart1(part1Input)
-        println("\nPart 1 answer is:\n$ans1")
-
+        println("Part 1 answer is:\n$ans1")
+        println()
         val part2Input = Resources.get(part2InputFilename)
         val ans2 = runPart2(part2Input)
-        println("\nPart 2 answer is:\n$ans2")
+        println("Part 2 answer is:\n$ans2")
     }
 
     companion object {

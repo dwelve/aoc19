@@ -59,6 +59,11 @@ class CPU constructor(val program: MutableList<Int>) {
         2 to Opcode(2, ::op2, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
         3 to Opcode(3, ::op3, listOf(IOType.READ, IOType.WRITE)),
         4 to Opcode(4, ::op4, listOf(IOType.READ)),
+        5 to Opcode(5, ::op5, listOf(IOType.READ, IOType.READ)),
+        6 to Opcode(6, ::op6, listOf(IOType.READ, IOType.READ)),
+        7 to Opcode(7, ::op7, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
+        8 to Opcode(8, ::op8, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
+
         99 to Opcode(99, ::op99, emptyList())
     )
 
@@ -98,6 +103,48 @@ class CPU constructor(val program: MutableList<Int>) {
         val a = read(data, pc+1, modes[0])
         outputDevice.write(a)
         return pc+2
+    }
+
+    fun op5(data: MutableList<Int>, pc: Int, modes: List<ModeType>): Int {
+        // jump-if-true
+        val a = read(data, pc+1, modes[0])
+        return when (a) {
+            0 -> pc + 3
+            else -> read(data, pc+2, modes[1])
+        }
+    }
+
+    fun op6(data: MutableList<Int>, pc: Int, modes: List<ModeType>): Int {
+        // jump-if-false
+        val a = read(data, pc+1, modes[0])
+        return when (a) {
+            0 -> read(data, pc+2, modes[1])
+            else -> pc + 3
+        }
+    }
+
+    fun op7(data: MutableList<Int>, pc: Int, modes: List<ModeType>): Int {
+        // is-less-than
+        val a = read(data, pc+1, modes[0])
+        val b = read(data, pc+2, modes[1])
+        val out = when (a < b) {
+            true -> 1
+            false -> 0
+        }
+        write(data, pc+3, out, modes[2])
+        return pc+4
+    }
+
+    fun op8(data: MutableList<Int>, pc: Int, modes: List<ModeType>): Int {
+        // is-equal-to
+        val a = read(data, pc+1, modes[0])
+        val b = read(data, pc+2, modes[1])
+        val out = when (a == b) {
+            true -> 1
+            false -> 0
+        }
+        write(data, pc+3, out, modes[2])
+        return pc+4
     }
 
     fun op99(data: MutableList<Int>, pc: Int, modes: List<ModeType>): Int {
@@ -169,6 +216,12 @@ class Day5: IDay {
     }
 
     override fun runPart2(raw_input: String): Int {
-        return 0
+        val program = parseInput(raw_input).toMutableList()
+        val cpu = CPU(program)
+        cpu.inputDevice.feedInput(5)
+        cpu.run()
+        val output = cpu.outputDevice.buffer.toList()
+        println("Part 2 Output: $output")
+        return output.last()
     }
 }
