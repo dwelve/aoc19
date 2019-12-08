@@ -15,13 +15,13 @@ interface IDay {
         val part2Input = Resources.get(part2InputFilename)
         val ans2 = runPart2(part2Input)
         println("\nPart 2 answer is:\n$ans2")
-
     }
 
     companion object {
         fun newDay(dayNumber: Int): IDay {
             return when (dayNumber) {
                 1 -> Day1()
+                2 -> Day2()
                 else -> throw IllegalStateException("Unknown day number")
             }
         }

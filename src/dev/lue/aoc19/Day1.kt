@@ -4,16 +4,16 @@ class Day1 : IDay {
     override val part1InputFilename: String = "1.txt"
     override val part2InputFilename: String = "1.txt"
 
-    fun getFuel(mass: Int): Int {
+    private fun getFuel(mass: Int): Int {
         return (mass / 3) - 2
     }
 
-    fun getFuel2(mass: Int, acc: Int = 0): Int {
+    private fun getFuel2(mass: Int, acc: Int = 0): Int {
         val fuel = getFuel(mass)
         return if (fuel > 0) getFuel2(fuel, acc + fuel) else acc
     }
 
-    fun parseInput(raw_input: String): List<Int> {
+    private fun parseInput(raw_input: String): List<Int> {
         return raw_input.split("\n").map { it.toInt() }
     }
 
