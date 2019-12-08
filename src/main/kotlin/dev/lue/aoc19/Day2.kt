@@ -86,7 +86,7 @@ class Day2 : IDay {
     override val part2InputFilename: String = "2.txt"
 
 
-    private fun parseInput(raw_input: String): List<Int> {
+    fun parseInput(raw_input: String): List<Int> {
         return raw_input.split(",").map { it.toInt() }
     }
 
