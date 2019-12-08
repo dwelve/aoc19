@@ -1,7 +1,5 @@
 package dev.lue.aoc19
 
-import kotlin.test.assertEquals
-
 enum class IOType { READ, WRITE }
 enum class ModeType { INDIRECT, LITERAL }
 
