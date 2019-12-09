@@ -32,6 +32,11 @@ class Processor(val program: MutableList<IntcodeInt>, val inputChannel: Channel<
         2L to Opcode(2, true, ::mul, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
         3L to Opcode(3, true, ::readInput, listOf(IOType.WRITE)),
         4L to Opcode(4, true, ::writeOutput, listOf(IOType.READ)),
+        5L to Opcode(5, false, ::jumpIfTrue, listOf(IOType.READ, IOType.READ)),
+        6L to Opcode(6, false, ::jumpIfFalse, listOf(IOType.READ, IOType.READ)),
+        7L to Opcode(7, true, ::isLessThan, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
+        8L to Opcode(8, true, ::isEqual, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
+
         99L to Opcode(99, true, ::halt, emptyList())
     )
 
@@ -56,8 +61,6 @@ class Processor(val program: MutableList<IntcodeInt>, val inputChannel: Channel<
         val modes = listOf(m0, m1, m2)
         val opcode = opcodes[op] ?: error("Invalid opcode: $op")
 
-        //println("pc = $programCounter  op = $op")
-
         // construct argument list
         val arguments: MutableList<IntcodeInt> = mutableListOf()
         for ((index, ioType) in opcode.parameters.withIndex()) {
@@ -74,6 +77,8 @@ class Processor(val program: MutableList<IntcodeInt>, val inputChannel: Channel<
         }
 
         //println("arguments before: $arguments")
+        //println("pc = $programCounter  op = $op  args = $arguments")
+
         opcode.call(arguments)
         //println("arguments after:  $arguments")
 
@@ -93,6 +98,8 @@ class Processor(val program: MutableList<IntcodeInt>, val inputChannel: Channel<
             }
         }
 
+        //println("after pc = $programCounter  op = $op  args = $arguments")
+
         if (opcode.autoIncrementProgramCounter) {
             programCounter += opcode.parameters.size + 1
         }
@@ -110,30 +117,55 @@ class Processor(val program: MutableList<IntcodeInt>, val inputChannel: Channel<
     suspend fun add(args: MutableList<IntcodeInt>) {
         args[2] = args[0] + args[1]
     }
+
     suspend fun mul(args: MutableList<IntcodeInt>) {
         args[2] = args[0] * args[1]
     }
+
     suspend fun readInput(args: MutableList<IntcodeInt>) {
         args[0] = inputDevice.read()
     }
+
     suspend fun writeOutput(args: MutableList<IntcodeInt>) {
         outputDevice.write(args[0])
     }
-    suspend fun jumpIfTrue() {
 
+    suspend fun jumpIfTrue(args: MutableList<IntcodeInt>) {
+        if (args[0] != 0L) {
+            programCounter = args[1]
+        } else {
+            programCounter += args.size + 1
+        }
     }
-    suspend fun jumpIfFalse() {
 
+    suspend fun jumpIfFalse(args: MutableList<IntcodeInt>) {
+        if (args[0] == 0L) {
+            programCounter = args[1]
+        } else {
+            programCounter += args.size + 1
+        }
     }
-    suspend fun jumpIfLessThan() {
 
+    suspend fun isLessThan(args: MutableList<IntcodeInt>) {
+        args[2] = if (args[0] < args[1]) {
+            1
+        } else {
+            0
+        }
     }
-    suspend fun jumpIfEquals() {
 
+    suspend fun isEqual(args: MutableList<IntcodeInt>) {
+        args[2] = if (args[0] == args[1]) {
+            1
+        } else {
+            0
+        }
     }
+
     suspend fun addToRelativeBase() {
 
     }
+
     suspend fun halt(args: MutableList<IntcodeInt>) {
         throw HaltException()
     }
