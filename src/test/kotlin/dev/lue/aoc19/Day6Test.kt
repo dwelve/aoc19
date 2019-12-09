@@ -36,7 +36,7 @@ D)E""", mapOf("COM" to setOf("B"),
     }
 
     @Test
-    fun exampleTest() {
+    fun examplePart1Test() {
         val raw_input = """COM)B
 B)C
 C)D
@@ -51,6 +51,26 @@ K)L"""
         val app = Day6()
         val ans = app.runPart1(raw_input)
         assertEquals(42, ans)
+    }
+
+    @Test
+    fun examplePart2Test() {
+        val raw_input = """COM)B
+B)C
+C)D
+D)E
+E)F
+B)G
+G)H
+D)I
+E)J
+J)K
+K)L
+K)YOU
+I)SAN"""
+        val app = Day6()
+        val ans = app.runPart2(raw_input)
+        assertEquals(4, ans)
     }
 
     @Test
