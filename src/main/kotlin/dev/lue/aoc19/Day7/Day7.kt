@@ -284,4 +284,31 @@ class Day7: IDay {
         println("Part 2 Output: $output")
         return output
     }
+
+    fun runAmpCircuit(program: MutableList<Int>, phases: List<Int>): Int {
+        val output = runBlocking {
+            val N = phases.size
+            val channels = (0 until N).map { Channel<Int>(UNLIMITED) }
+            val cpus = (0 until N).map { CPU(program.toMutableList(), channels[it], channels[(it+1) % N]) }
+
+            for ((phase, cpu) in (phases zip cpus)) {
+                cpu.inputDevice.feedInput(phase)
+            }
+
+            // cpu0 has initial input of 0
+            cpus[0].inputDevice.feedInput(0)
+
+            val jobs = cpus.map { cpu ->
+                async {
+                    cpu.run()
+                }
+                //lastOutput = cpu.outputDevice.buffer.pop()
+            }
+            jobs.last().join()  // only care about last stage
+            val output = cpus.last().outputDevice.buffer.last()
+
+            return@runBlocking output
+        }
+        return output
+    }
 }
