@@ -270,23 +270,24 @@ class Day9: IDay {
     }
 
     override fun runPart2(raw_input: String): Long {
-        //val program = parseInput(raw_input).toMutableList()
-        val program = parseInput("""3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,
-27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5""").toMutableList()
+        val program = parseInput(raw_input).toMutableList()
+        //val program = parseInput("""109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99""").toMutableList()
+        //val program = parseInput("""1102,34915192,34915192,7,4,7,99,0""").toMutableList()
+        //val program: MutableList<Long> = parseInput("""104,1125899906842624,99""").toMutableList()
         val output = runBlocking {
             //sampleStart
-            val N = 5
+            val N = 1
             //val channels = ArrayList<Channel<Int>>()
             val channels = (0 until N).map { Channel<Long>(UNLIMITED) }
             val cpus = (0 until N).map { CPU(program.toMutableList(), channels[it], channels[(it+1) % N]) }
-            val phases = arrayListOf<Long>(9,8,7,6,5)
+            val phases = arrayListOf<Long>(2)
 
             for ((phase, cpu) in (phases zip cpus)) {
                 cpu.inputDevice.feedInput(phase)
             }
 
             // cpu0 has initial input of 0
-            cpus[0].inputDevice.feedInput(0)
+            //cpus[0].inputDevice.feedInput(1)
 
             val jobs = cpus.map { cpu ->
                 async {
@@ -295,38 +296,11 @@ class Day9: IDay {
                 //lastOutput = cpu.outputDevice.buffer.pop()
             }
             jobs.last().join()  // only care about last stage
-            val output = cpus.last().outputDevice.buffer.last()
+            val output = cpus.last().outputDevice.buffer
 
             return@runBlocking output
         }
         println("Part 2 Output: $output")
-        return output
+        return output.last()
     }
-/*
-    fun runAmpCircuit(program: MutableList<Int>, phases: List<Int>): Int {
-        val output = runBlocking {
-            val N = phases.size
-            val channels = (0 until N).map { Channel<Int>(UNLIMITED) }
-            val cpus = (0 until N).map { CPU(program.toMutableList(), channels[it], channels[(it+1) % N]) }
-
-            for ((phase, cpu) in (phases zip cpus)) {
-                cpu.inputDevice.feedInput(phase)
-            }
-
-            // cpu0 has initial input of 0
-            cpus[0].inputDevice.feedInput(0)
-
-            val jobs = cpus.map { cpu ->
-                async {
-                    cpu.run()
-                }
-                //lastOutput = cpu.outputDevice.buffer.pop()
-            }
-            jobs.last().join()  // only care about last stage
-            val output = cpus.last().outputDevice.buffer.last()
-
-            return@runBlocking output
-        }
-        return output
-    } */
 }
