@@ -30,6 +30,8 @@ class Processor(val program: MutableList<IntcodeInt>, val inputChannel: Channel<
     val opcodes: Map<IntcodeInt, Opcode> = mapOf(
         1L to Opcode(1, true, ::add, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
         2L to Opcode(2, true, ::mul, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
+        3L to Opcode(3, true, ::readInput, listOf(IOType.WRITE)),
+        4L to Opcode(4, true, ::writeOutput, listOf(IOType.READ)),
         99L to Opcode(99, true, ::halt, emptyList())
     )
 
@@ -111,11 +113,11 @@ class Processor(val program: MutableList<IntcodeInt>, val inputChannel: Channel<
     suspend fun mul(args: MutableList<IntcodeInt>) {
         args[2] = args[0] * args[1]
     }
-    suspend fun readInput() {
-
+    suspend fun readInput(args: MutableList<IntcodeInt>) {
+        args[0] = inputDevice.read()
     }
-    suspend fun writeOutput() {
-
+    suspend fun writeOutput(args: MutableList<IntcodeInt>) {
+        outputDevice.write(args[0])
     }
     suspend fun jumpIfTrue() {
 
