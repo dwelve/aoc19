@@ -1,11 +1,9 @@
 package dev.lue.aoc19.Day9
 
 import dev.lue.aoc19.IDay
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.*
 import kotlin.reflect.KSuspendFunction3
@@ -13,7 +11,7 @@ import kotlin.reflect.KSuspendFunction3
 enum class IOType { READ, WRITE }
 enum class ModeType(val mode: Int) {
     INDIRECT(0),
-    LITERAL(1),
+    IMMEDIATE(1),
     RELATIVE(2);
 
     companion object {
@@ -110,7 +108,7 @@ class CPU constructor(val _program: MutableList<Long>, val inputChannel: Channel
 
     suspend fun op3(data: MutableMap<Long, Long>, pc: Long, modes: List<ModeType>): Long {
         // read from input, write to  location
-        if (modes[0] == ModeType.LITERAL) {
+        if (modes[0] == ModeType.IMMEDIATE) {
             throw InvalidModeException()
         }
         val a = inputDevice.read()
@@ -209,7 +207,7 @@ class CPU constructor(val _program: MutableList<Long>, val inputChannel: Channel
         val a = data[value]!!
         return when (mode) {
             ModeType.INDIRECT -> data.getOrDefault(a, 0)
-            ModeType.LITERAL -> a
+            ModeType.IMMEDIATE -> a
             ModeType.RELATIVE -> data.getOrDefault(a + rb, 0)
         }
     }
@@ -219,7 +217,7 @@ class CPU constructor(val _program: MutableList<Long>, val inputChannel: Channel
         val indirectLocation = data[location]!!
         when (mode) {
             ModeType.INDIRECT -> data[indirectLocation] = value
-            ModeType.LITERAL -> data[indirectLocation] = value
+            ModeType.IMMEDIATE -> data[indirectLocation] = value
             ModeType.RELATIVE -> data[indirectLocation + rb] = value
         }
     }
