@@ -1,4 +1,6 @@
-package dev.lue.aoc19
+package dev.lue.aoc19.Day2
+
+import dev.lue.aoc19.IDay
 
 enum class IOType { READ, WRITE }
 enum class ModeType { INDIRECT, LITERAL }
@@ -9,9 +11,25 @@ data class Opcode(val op: Int, val fn: OpcodeFunction, val parameters: List<IOTy
 
 class CPU constructor(val program: MutableList<Int>) {
     var pc: Int = 0
-    val opcodes: Map<Int, Opcode > = mapOf(
-        1 to Opcode(1, ::op1, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
-        2 to Opcode(2, ::op2, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
+    val opcodes: Map<Int, Opcode> = mapOf(
+        1 to Opcode(
+            1,
+            ::op1,
+            listOf(
+                IOType.READ,
+                IOType.READ,
+                IOType.WRITE
+            )
+        ),
+        2 to Opcode(
+            2,
+            ::op2,
+            listOf(
+                IOType.READ,
+                IOType.READ,
+                IOType.WRITE
+            )
+        ),
         99 to Opcode(99, ::op99, emptyList())
     )
 

@@ -1,5 +1,7 @@
 package dev.lue.aoc19
 
+import dev.lue.aoc19.Day2.Day2
+
 interface IDay {
     val part1InputFilename: String
     val part2InputFilename: String
