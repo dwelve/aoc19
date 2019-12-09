@@ -17,11 +17,6 @@ import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
 
 
-fun parseInput(raw_input: String): List<IntcodeInt> {
-    return raw_input.trim().split(",").map { it.trim().toLong() }
-}
-
-
 class ProcessorTest {
     companion object {
         @JvmStatic
