@@ -6,8 +6,8 @@ interface IDay {
     val part1InputFilename: String
     val part2InputFilename: String
 
-    fun runPart1(raw_input: String): Int
-    fun runPart2(raw_input: String): Int
+    fun runPart1(raw_input: String): Number
+    fun runPart2(raw_input: String): Number
 
     fun run() {
         val part1Input = Resources.get(part1InputFilename)

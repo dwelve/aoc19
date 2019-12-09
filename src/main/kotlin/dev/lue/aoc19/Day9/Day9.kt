@@ -21,71 +21,74 @@ enum class ModeType(val mode: Int) {
     }
 }
 
-typealias OpcodeFunction = (MutableMap<Int, Int>, Int, List<ModeType>) -> Int
+//typealias OpcodeFunction = (MutableMap<Long, Long>, Int, List<ModeType>) -> Int
 //typealias IOFunction = (MutableList<Int>, Int, ModeType) -> ()
 
 data class Opcode(
-    val op: Int, val call: KSuspendFunction3<
-            @ParameterName(name = "data") MutableMap<Int, Int>,
-            @ParameterName(name = "pc") Int, @ParameterName(name = "modes") List<ModeType>, Int>,
-            val parameters: List<IOType>)
+    val op: Long,
+    val call: KSuspendFunction3<
+            @ParameterName(name = "data") MutableMap<Long, Long>,
+            @ParameterName(name = "pc") Long,
+            @ParameterName(name = "modes") List<ModeType>,
+            Long>,
+    val parameters: List<IOType>)
 
 
 interface IReadDevice {
-    suspend fun read(): Int
+    suspend fun read(): Long
 }
 
 interface IWriteDevice {
-    suspend fun write(value: Int)
+    suspend fun write(value: Long)
 }
 
 interface IReadWriteDevice: IReadDevice, IWriteDevice
 
-class IntcodeInput(val channel: Channel<Int>): IReadDevice {
-    val buffer: Deque<Int> = LinkedList()
+class IntcodeInput(val channel: Channel<Long>): IReadDevice {
+    val buffer: Deque<Long> = LinkedList()
 
-    override suspend fun read(): Int {
+    override suspend fun read(): Long {
         val value = channel.receive()
         buffer.addLast(value)
         return value
     }
 
-    suspend fun feedInput(value: Int) {
+    suspend fun feedInput(value: Long) {
         channel.send(value)
     }
 }
 
-class IntcodeOutput(val channel: Channel<Int>): IWriteDevice {
-    val buffer: Deque<Int> = LinkedList()
+class IntcodeOutput(val channel: Channel<Long>): IWriteDevice {
+    val buffer: Deque<Long> = LinkedList()
 
-    override suspend fun write(value: Int) {
+    override suspend fun write(value: Long) {
         buffer.addLast(value)
         channel.send(value)
     }
 }
 
 class CPU constructor(val _program: MutableList<Long>, val inputChannel: Channel<Long>, val outputChannel: Channel<Long>) {
-    val programMemory = _program.mapIndexed { index, value -> index to value }.toMap().toMutableMap()
-    var pc: Int = 0  // program counter
-    var rb: Int = 0  // relative base
+    val programMemory: MutableMap<Long, Long> = _program.mapIndexed { index, value -> index.toLong() to value }.toMap().toMutableMap()
+    var pc: Long = 0  // program counter
+    var rb: Long = 0  // relative base
     val inputDevice = IntcodeInput(inputChannel)
     val outputDevice = IntcodeOutput(outputChannel)
 
-    val opcodes: Map<Int, Opcode > = mapOf(
-        1 to Opcode(1, ::op1, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
-        2 to Opcode(2, ::op2, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
-        3 to Opcode(3, ::op3, listOf(IOType.READ, IOType.WRITE)),
-        4 to Opcode(4, ::op4, listOf(IOType.READ)),
-        5 to Opcode(5, ::op5, listOf(IOType.READ, IOType.READ)),
-        6 to Opcode(6, ::op6, listOf(IOType.READ, IOType.READ)),
-        7 to Opcode(7, ::op7, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
-        8 to Opcode(8, ::op8, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
-        9 to Opcode(9, ::op9, listOf(IOType.READ)),
+    val opcodes: Map<Long, Opcode > = mapOf<Long, Opcode>(
+        1L to Opcode(1, ::op1, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
+        2L to Opcode(2, ::op2, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
+        3L to Opcode(3, ::op3, listOf(IOType.READ, IOType.WRITE)),
+        4L to Opcode(4, ::op4, listOf(IOType.READ)),
+        5L to Opcode(5, ::op5, listOf(IOType.READ, IOType.READ)),
+        6L to Opcode(6, ::op6, listOf(IOType.READ, IOType.READ)),
+        7L to Opcode(7, ::op7, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
+        8L to Opcode(8, ::op8, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
+        9L to Opcode(9, ::op9, listOf(IOType.READ)),
 
-        99 to Opcode(99, ::op99, emptyList())
+        99L to Opcode(99, ::op99, emptyList())
     )
 
-    suspend fun op1(data: MutableMap<Int, Int>, pc: Int, modes: List<ModeType>): Int {
+    suspend fun op1(data: MutableMap<Long, Long>, pc: Long, modes: List<ModeType>): Long {
         // add
         val a = read(data, pc+1, modes[0])
         val b = read(data, pc+2, modes[1])
@@ -95,7 +98,7 @@ class CPU constructor(val _program: MutableList<Long>, val inputChannel: Channel
         return pc+4
     }
 
-    suspend fun op2(data: MutableMap<Int, Int>, pc: Int, modes: List<ModeType>): Int {
+    suspend fun op2(data: MutableMap<Long, Long>, pc: Long, modes: List<ModeType>): Long {
         // mul
         val a = read(data, pc+1, modes[0])
         val b = read(data, pc+2, modes[1])
@@ -105,9 +108,9 @@ class CPU constructor(val _program: MutableList<Long>, val inputChannel: Channel
         return pc+4
     }
 
-    suspend fun op3(data: MutableMap<Int, Int>, pc: Int, modes: List<ModeType>): Int {
-        // read from input, write to indirect location
-        if (modes[0] != ModeType.INDIRECT) {
+    suspend fun op3(data: MutableMap<Long, Long>, pc: Long, modes: List<ModeType>): Long {
+        // read from input, write to  location
+        if (modes[0] == ModeType.LITERAL) {
             throw InvalidModeException()
         }
         val a = inputDevice.read()
@@ -116,36 +119,36 @@ class CPU constructor(val _program: MutableList<Long>, val inputChannel: Channel
         return pc+2
     }
 
-    suspend fun op4(data:MutableMap<Int, Int>, pc: Int, modes: List<ModeType>): Int {
+    suspend fun op4(data: MutableMap<Long, Long>, pc: Long, modes: List<ModeType>): Long {
         // write to output
         val a = read(data, pc+1, modes[0])
         outputDevice.write(a)
         return pc+2
     }
 
-    suspend fun op5(data: MutableMap<Int, Int>, pc: Int, modes: List<ModeType>): Int {
+    suspend fun op5(data: MutableMap<Long, Long>, pc: Long, modes: List<ModeType>): Long {
         // jump-if-true
         val a = read(data, pc+1, modes[0])
         return when (a) {
-            0 -> pc + 3
+            0L -> pc + 3
             else -> read(data, pc+2, modes[1])
         }
     }
 
-    suspend fun op6(data: MutableMap<Int, Int>, pc: Int, modes: List<ModeType>): Int {
+    suspend fun op6(data: MutableMap<Long, Long>, pc: Long, modes: List<ModeType>): Long {
         // jump-if-false
         val a = read(data, pc+1, modes[0])
         return when (a) {
-            0 -> read(data, pc+2, modes[1])
+            0L -> read(data, pc+2, modes[1])
             else -> pc + 3
         }
     }
 
-    suspend fun op7(data: MutableMap<Int, Int>, pc: Int, modes: List<ModeType>): Int {
+    suspend fun op7(data: MutableMap<Long, Long>, pc: Long, modes: List<ModeType>): Long {
         // is-less-than
         val a = read(data, pc+1, modes[0])
         val b = read(data, pc+2, modes[1])
-        val out = when (a < b) {
+        val out: Long = when (a < b) {
             true -> 1
             false -> 0
         }
@@ -153,11 +156,11 @@ class CPU constructor(val _program: MutableList<Long>, val inputChannel: Channel
         return pc+4
     }
 
-    suspend fun op8(data: MutableMap<Int, Int>, pc: Int, modes: List<ModeType>): Int {
+    suspend fun op8(data: MutableMap<Long, Long>, pc: Long, modes: List<ModeType>): Long {
         // is-equal-to
         val a = read(data, pc+1, modes[0])
         val b = read(data, pc+2, modes[1])
-        val out = when (a == b) {
+        val out: Long = when (a == b) {
             true -> 1
             false -> 0
         }
@@ -165,13 +168,13 @@ class CPU constructor(val _program: MutableList<Long>, val inputChannel: Channel
         return pc+4
     }
 
-    suspend fun op9(data: MutableMap<Int, Int>, pc: Int, modes: List<ModeType>): Int {
+    suspend fun op9(data: MutableMap<Long, Long>, pc: Long, modes: List<ModeType>): Long {
         val a = read(data, pc+1, modes[0])
         rb += a
         return pc+2
     }
 
-    suspend fun op99(data:MutableMap<Int, Int>, pc: Int, modes: List<ModeType>): Int {
+    suspend fun op99(data: MutableMap<Long, Long>, pc: Long, modes: List<ModeType>): Long {
         throw HaltException()
     }
 
@@ -190,18 +193,18 @@ class CPU constructor(val _program: MutableList<Long>, val inputChannel: Channel
     }
 
     suspend fun step() {
-        val opWithMode = programMemory[pc]!!
+        val opWithMode: Long = programMemory[pc]!!
         val op = opWithMode % 100
-        val m0 = ModeType.from((opWithMode / 100) % 10)
-        val m1 = ModeType.from((opWithMode / 1000) % 10)
-        val m2 = ModeType.from((opWithMode / 10000) % 10)
+        val m0 = ModeType.from(((opWithMode / 100) % 10).toInt())
+        val m1 = ModeType.from(((opWithMode / 1000) % 10).toInt())
+        val m2 = ModeType.from(((opWithMode / 10000) % 10).toInt())
         val modes = listOf(m0, m1, m2)
         val opcode = opcodes[op] ?: error("Invalid opcode: $op")
         //println("pc: $pc  op: $op")
         pc = opcode.call(programMemory, pc, modes)
     }
 
-    fun read(data: MutableMap<Int, Int>, value: Int, mode: ModeType = ModeType.INDIRECT): Int {
+    fun read(data: MutableMap<Long, Long>, value: Long, mode: ModeType = ModeType.INDIRECT): Long {
         //val a = data.getOrDefault(value, 0)  // hmm, this is part of the instruction, maybe not give default
         val a = data[value]!!
         return when (mode) {
@@ -211,7 +214,7 @@ class CPU constructor(val _program: MutableList<Long>, val inputChannel: Channel
         }
     }
 
-    fun write(data: MutableMap<Int, Int>, location: Int, value: Int, mode: ModeType = ModeType.INDIRECT) {
+    fun write(data: MutableMap<Long, Long>, location: Long, value: Long, mode: ModeType = ModeType.INDIRECT) {
         //val indirectLocation = data.getOrDefault(location, 0) // hmm, this is part of the instruction, maybe not give default
         val indirectLocation = data[location]!!
         when (mode) {
@@ -232,17 +235,17 @@ class Day9: IDay {
     }
 
     override fun runPart1(raw_input: String): Long {
-        //val program = parseInput(raw_input).toMutableList()
+        val program = parseInput(raw_input).toMutableList()
         //val program = parseInput("""109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99""").toMutableList()
         //val program = parseInput("""1102,34915192,34915192,7,4,7,99,0""").toMutableList()
-        val program = parseInput("""104,1125899906842624,99""").toMutableList()
+        //val program: MutableList<Long> = parseInput("""104,1125899906842624,99""").toMutableList()
         val output = runBlocking {
             //sampleStart
             val N = 1
             //val channels = ArrayList<Channel<Int>>()
-            val channels = (0 until N).map { Channel<Int>(UNLIMITED) }
+            val channels = (0 until N).map { Channel<Long>(UNLIMITED) }
             val cpus = (0 until N).map { CPU(program.toMutableList(), channels[it], channels[(it+1) % N]) }
-            val phases = arrayListOf(1)
+            val phases = arrayListOf<Long>(1)
 
             for ((phase, cpu) in (phases zip cpus)) {
                 cpu.inputDevice.feedInput(phase)
@@ -266,7 +269,7 @@ class Day9: IDay {
         return output.last()
     }
 
-    override fun runPart2(raw_input: String): Int {
+    override fun runPart2(raw_input: String): Long {
         //val program = parseInput(raw_input).toMutableList()
         val program = parseInput("""3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,
 27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5""").toMutableList()
@@ -274,9 +277,9 @@ class Day9: IDay {
             //sampleStart
             val N = 5
             //val channels = ArrayList<Channel<Int>>()
-            val channels = (0 until N).map { Channel<Int>(UNLIMITED) }
+            val channels = (0 until N).map { Channel<Long>(UNLIMITED) }
             val cpus = (0 until N).map { CPU(program.toMutableList(), channels[it], channels[(it+1) % N]) }
-            val phases = arrayListOf(9,8,7,6,5)
+            val phases = arrayListOf<Long>(9,8,7,6,5)
 
             for ((phase, cpu) in (phases zip cpus)) {
                 cpu.inputDevice.feedInput(phase)
@@ -299,7 +302,7 @@ class Day9: IDay {
         println("Part 2 Output: $output")
         return output
     }
-
+/*
     fun runAmpCircuit(program: MutableList<Int>, phases: List<Int>): Int {
         val output = runBlocking {
             val N = phases.size
@@ -325,5 +328,5 @@ class Day9: IDay {
             return@runBlocking output
         }
         return output
-    }
+    } */
 }
