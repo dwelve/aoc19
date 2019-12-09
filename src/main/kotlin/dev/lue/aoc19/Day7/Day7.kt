@@ -312,3 +312,25 @@ class Day7: IDay {
         return output
     }
 }
+
+fun <T> getPermutations(items: List<T>, acc: List<List<T>> = listOf(emptyList())) : List<List<T>> {
+    if (items.isEmpty()) {
+        return acc
+    }
+
+    val allPerms = mutableListOf<List<T>>()
+    for (i in 0 until items.size) {
+        val addItem = items[i]
+        val newItems = items.toMutableList()
+        newItems.removeAt(i)
+        val nextAcc = mutableListOf<List<T>>()
+        for (permAcc in acc) {
+            val nextPermAcc = permAcc.plus(addItem)
+            nextAcc.add(nextPermAcc)
+        }
+        val newPerms = getPermutations(newItems, nextAcc)
+        allPerms.addAll(newPerms)
+    }
+
+    return allPerms
+}
