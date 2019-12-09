@@ -9,7 +9,7 @@ import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
 
 class Day7Test {
-    //@Test
+    @Test
     fun solutionTest() {
         val app = Day7()
         app.run()

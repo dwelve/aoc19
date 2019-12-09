@@ -8,6 +8,7 @@ import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.*
+import kotlin.math.max
 import kotlin.reflect.KSuspendFunction3
 
 enum class IOType { READ, WRITE }
@@ -219,67 +220,24 @@ class Day7: IDay {
     }
 
     override fun runPart1(raw_input: String): Int {
-        //val program = parseInput(raw_input).toMutableList()
-        val program = parseInput("""3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0""").toMutableList()
-        val output = runBlocking {
-            //sampleStart
-            val N = 5
-            //val channels = ArrayList<Channel<Int>>()
-            val channels = (0 until N).map { Channel<Int>(UNLIMITED) }
-            val cpus = (0 until N).map { CPU(program.toMutableList(), channels[it], channels[(it+1) % N]) }
-            val phases = arrayListOf(4, 3, 2, 1, 0)
-
-            for ((phase, cpu) in (phases zip cpus)) {
-                cpu.inputDevice.feedInput(phase)
-            }
-
-            // cpu0 has initial input of 0
-            cpus[0].inputDevice.feedInput(0)
-
-            val jobs = cpus.map { cpu ->
-                async {
-                    cpu.run()
-                }
-                //lastOutput = cpu.outputDevice.buffer.pop()
-            }
-            jobs.last().join()  // only care about last stage
-            val output = cpus.last().outputDevice.buffer.last()
-
-            return@runBlocking output
+        val program = parseInput(raw_input).toMutableList()
+        //val program = parseInput("""3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0""").toMutableList()
+        var output = Int.MIN_VALUE
+        for (phases in getPermutations(listOf(0, 1, 2, 3, 4))) {
+            val ret = runAmpCircuit(program, phases)
+            output = max(output, ret)
         }
         println("Part 1 Output: $output")
         return output
     }
 
     override fun runPart2(raw_input: String): Int {
-        //val program = parseInput(raw_input).toMutableList()
-        val program = parseInput("""3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,
-27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5""").toMutableList()
-        val output = runBlocking {
-            //sampleStart
-            val N = 5
-            //val channels = ArrayList<Channel<Int>>()
-            val channels = (0 until N).map { Channel<Int>(UNLIMITED) }
-            val cpus = (0 until N).map { CPU(program.toMutableList(), channels[it], channels[(it+1) % N]) }
-            val phases = arrayListOf(9,8,7,6,5)
-
-            for ((phase, cpu) in (phases zip cpus)) {
-                cpu.inputDevice.feedInput(phase)
-            }
-
-            // cpu0 has initial input of 0
-            cpus[0].inputDevice.feedInput(0)
-
-            val jobs = cpus.map { cpu ->
-                async {
-                    cpu.run()
-                }
-                //lastOutput = cpu.outputDevice.buffer.pop()
-            }
-            jobs.last().join()  // only care about last stage
-            val output = cpus.last().outputDevice.buffer.last()
-
-            return@runBlocking output
+        val program = parseInput(raw_input).toMutableList()
+        //val program = parseInput("""3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5""").toMutableList()
+        var output = Int.MIN_VALUE
+        for (phases in getPermutations(listOf(5, 6, 7, 8, 9))) {
+            val ret = runAmpCircuit(program, phases)
+            output = max(output, ret)
         }
         println("Part 2 Output: $output")
         return output
