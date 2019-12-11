@@ -36,6 +36,7 @@ class Processor(val program: MutableList<IntcodeInt>, val inputChannel: Channel<
         6L to Opcode(6, false, ::jumpIfFalse, listOf(IOType.READ, IOType.READ)),
         7L to Opcode(7, true, ::isLessThan, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
         8L to Opcode(8, true, ::isEqual, listOf(IOType.READ, IOType.READ, IOType.WRITE)),
+        9L to Opcode(9, true, ::addToRelativeBase, listOf(IOType.READ)),
 
         99L to Opcode(99, true, ::halt, emptyList())
     )
@@ -46,7 +47,7 @@ class Processor(val program: MutableList<IntcodeInt>, val inputChannel: Channel<
                 step()
             }
         } catch (e: HaltException) {
-            //println("CPU HALT")
+            println("CPU HALT")
         }
         //println(program)
     }
@@ -162,8 +163,8 @@ class Processor(val program: MutableList<IntcodeInt>, val inputChannel: Channel<
         }
     }
 
-    suspend fun addToRelativeBase() {
-
+    suspend fun addToRelativeBase(args: MutableList<IntcodeInt>) {
+        relativeBase += args[0]
     }
 
     suspend fun halt(args: MutableList<IntcodeInt>) {
